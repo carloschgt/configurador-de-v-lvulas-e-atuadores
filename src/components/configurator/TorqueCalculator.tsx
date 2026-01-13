@@ -11,10 +11,10 @@ import { cn } from '@/lib/utils';
 import { useNormValidation } from '@/hooks/useNormValidation';
 
 interface TorqueCalculatorProps {
-  valveSize: number;
-  pressureClass: number;
-  seatMaterial: string;
-  onTorqueValidated: (isValid: boolean, torqueValue: number) => void;
+  valveSize?: number;
+  pressureClass?: number;
+  seatMaterial?: string;
+  onTorqueValidated?: (isValid: boolean, torqueValue: number) => void;
 }
 
 const TorqueCalculator = ({
@@ -40,7 +40,7 @@ const TorqueCalculator = ({
         const result = await calculateTorque(valveSize, pressureClass, seatMaterial);
         setCalculatedTorque(result);
         setSelectedTorque(result.recommended);
-        onTorqueValidated(true, result.recommended);
+        onTorqueValidated?.(true, result.recommended);
         setIsCalculating(false);
       }
     };
@@ -64,7 +64,7 @@ const TorqueCalculator = ({
     
     if (calculatedTorque) {
       const isValid = newValue >= calculatedTorque.minTorque && newValue <= calculatedTorque.maxTorque;
-      onTorqueValidated(isValid, newValue);
+      onTorqueValidated?.(isValid, newValue);
     }
   };
 

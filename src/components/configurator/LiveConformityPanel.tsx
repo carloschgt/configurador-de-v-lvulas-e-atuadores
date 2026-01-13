@@ -28,14 +28,14 @@ interface ConformityCheck {
 }
 
 interface LiveConformityPanelProps {
-  valveType: ValveType | null;
-  serviceType: ServiceType | null;
-  constructionStandard: string | null;
-  naceRequired: boolean;
-  fireTestRequired: boolean;
-  lowEmissionRequired: boolean;
-  silLevel: string | null;
-  selectedMaterials: {
+  valveType?: ValveType | null;
+  serviceType?: ServiceType | null;
+  constructionStandard?: string | null;
+  naceRequired?: boolean;
+  fireTestRequired?: boolean;
+  lowEmissionRequired?: boolean;
+  silLevel?: string | null;
+  selectedMaterials?: {
     body: string | null;
     obturator: string | null;
     seat: string | null;
@@ -45,14 +45,14 @@ interface LiveConformityPanelProps {
 }
 
 const LiveConformityPanel = ({
-  valveType,
-  serviceType,
-  constructionStandard,
-  naceRequired,
-  fireTestRequired,
-  lowEmissionRequired,
-  silLevel,
-  selectedMaterials,
+  valveType = null,
+  serviceType = null,
+  constructionStandard = null,
+  naceRequired = false,
+  fireTestRequired = false,
+  lowEmissionRequired = false,
+  silLevel = null,
+  selectedMaterials = { body: null, obturator: null, seat: null, stem: null },
   checks = []
 }: LiveConformityPanelProps) => {
   // Generate conformity checks based on current state

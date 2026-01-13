@@ -8,8 +8,11 @@ import StepIndicator from "@/components/configurator/StepIndicator";
 import Step1Basic from "@/components/configurator/Step1Basic";
 import Step2Actuation from "@/components/configurator/Step2Actuation";
 import Step3Materials from "@/components/configurator/Step3Materials";
-import ConformityPanel from "@/components/configurator/ConformityPanel";
 import ConfigurationSummary from "@/components/configurator/ConfigurationSummary";
+import NormSupremaGateway from "@/components/configurator/NormSupremaGateway";
+import LiveConformityPanel from "@/components/configurator/LiveConformityPanel";
+import TorqueCalculator from "@/components/configurator/TorqueCalculator";
+import { useNormValidation } from "@/hooks/useNormValidation";
 
 import { ValveConfiguration } from "@/types/valve";
 
@@ -40,6 +43,7 @@ const initialConfig: ValveConfiguration = {
 const Configurator = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [config, setConfig] = useState<ValveConfiguration>(initialConfig);
+  const { validateCombination, isValidating } = useNormValidation();
 
   const handleConfigChange = (updates: Partial<ValveConfiguration>) => {
     setConfig((prev) => ({ ...prev, ...updates }));
@@ -88,7 +92,14 @@ const Configurator = () => {
     });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    // Basic validation
+    if (!canProceed()) {
+      toast.error("Configuração incompleta", {
+        description: "Preencha todos os campos obrigatórios.",
+      });
+      return;
+    }
     toast.success("Especificação enviada para aprovação!", {
       description: "Você será notificado quando for revisada.",
     });
@@ -132,49 +143,76 @@ const Configurator = () => {
         </CardContent>
       </Card>
 
-      {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Form Area */}
-        <div className="lg:col-span-2 space-y-6">
-          {renderStep()}
+      {/* Main Content wrapped in NormSupremaGateway */}
+      <NormSupremaGateway>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Form Area */}
+          <div className="lg:col-span-2 space-y-6">
+            {renderStep()}
 
-          {/* Navigation */}
-          <div className="flex items-center justify-between pt-4">
-            <Button
-              variant="outline"
-              onClick={handleBack}
-              disabled={currentStep === 1}
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Anterior
-            </Button>
-
-            {currentStep < 3 ? (
-              <Button onClick={handleNext} disabled={!canProceed()}>
-                Próximo
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            ) : (
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={handleSave}>
-                  <Save className="h-4 w-4 mr-2" />
-                  Salvar
-                </Button>
-                <Button onClick={handleSubmit} disabled={!canProceed()}>
-                  <FileDown className="h-4 w-4 mr-2" />
-                  Enviar para Aprovação
-                </Button>
-              </div>
+            {/* Torque Calculator - shown in step 2 for actuated valves */}
+            {currentStep === 2 && config.actuationType && config.actuationType !== "MANUAL" && (
+              <TorqueCalculator 
+                valveSize={config.diameterNPS ? parseInt(config.diameterNPS) : undefined}
+                pressureClass={config.pressureClass ? parseInt(config.pressureClass) : undefined}
+                seatMaterial={config.seatMaterial || undefined}
+              />
             )}
+
+            {/* Navigation */}
+            <div className="flex items-center justify-between pt-4">
+              <Button
+                variant="outline"
+                onClick={handleBack}
+                disabled={currentStep === 1}
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Anterior
+              </Button>
+
+              {currentStep < 3 ? (
+                <Button onClick={handleNext} disabled={!canProceed()}>
+                  Próximo
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              ) : (
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={handleSave}>
+                    <Save className="h-4 w-4 mr-2" />
+                    Salvar
+                  </Button>
+                  <Button 
+                    onClick={handleSubmit} 
+                    disabled={!canProceed() || isValidating}
+                  >
+                    <FileDown className="h-4 w-4 mr-2" />
+                    {isValidating ? "Validando..." : "Enviar para Aprovação"}
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Side Panels */}
+          <div className="space-y-6">
+            <ConfigurationSummary config={config} />
+            <LiveConformityPanel 
+              valveType={config.valveType as any}
+              constructionStandard={config.constructionStandard}
+              naceRequired={config.naceCompliant}
+              fireTestRequired={config.fireTest !== null}
+              lowEmissionRequired={config.lowFugitiveEmission}
+              silLevel={config.silCertification}
+              selectedMaterials={{
+                body: config.bodyMaterial,
+                obturator: config.obturatorMaterial,
+                seat: config.seatMaterial,
+                stem: config.stemMaterial
+              }}
+            />
           </div>
         </div>
-
-        {/* Side Panels */}
-        <div className="space-y-6">
-          <ConfigurationSummary config={config} />
-          <ConformityPanel config={config} />
-        </div>
-      </div>
+      </NormSupremaGateway>
     </div>
   );
 };
