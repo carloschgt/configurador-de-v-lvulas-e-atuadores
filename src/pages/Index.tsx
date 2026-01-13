@@ -4,12 +4,19 @@ import Sidebar from "@/components/layout/Sidebar";
 import Dashboard from "@/pages/Dashboard";
 import Configurator from "@/pages/Configurator";
 import Specifications from "@/pages/Specifications";
+import EmergencyModeBanner from "@/components/EmergencyModeBanner";
+import { useSystemHealth } from "@/hooks/useSystemHealth";
 
 const Index = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activePage, setActivePage] = useState("dashboard");
+  const { isHealthy } = useSystemHealth();
 
   const handleNavigate = (page: string) => {
+    // FAIL-CLOSED: Block new spec creation if system is unhealthy
+    if (page === "configurator" && !isHealthy) {
+      return;
+    }
     setActivePage(page);
   };
 
@@ -18,7 +25,7 @@ const Index = () => {
       case "dashboard":
         return <Dashboard onNavigate={handleNavigate} />;
       case "configurator":
-        return <Configurator />;
+        return isHealthy ? <Configurator /> : <Dashboard onNavigate={handleNavigate} />;
       case "specs":
         return <Specifications onNavigate={handleNavigate} />;
       case "approval":
@@ -57,6 +64,7 @@ const Index = () => {
 
       <main className="md:ml-64 min-h-[calc(100vh-4rem)]">
         <div className="container py-6 px-4 md:px-6 max-w-7xl">
+          <EmergencyModeBanner />
           {renderPage()}
         </div>
       </main>
