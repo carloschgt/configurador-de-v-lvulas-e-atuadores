@@ -1,0 +1,188 @@
+{
+  "version": "2.0.0-IMEX-PRODUCTION",
+  "status": "ACTIVE",
+  "maintained_by": "carlos.teixeira@imexsolutions.com.br",
+  "last_validated": "2025-01-15T10:00:00Z",
+  "emergency_contact": "carlos.teixeira@imexsolutions.com.br",
+  
+  "system_requirements": {
+    "min_norms_for_operation": 3,
+    "required_domain_completeness": 100,
+    "auto_block_threshold": 95
+  },
+  
+  "norms": {
+    "API_6D_2022": {
+      "code": "API_6D_2022",
+      "title": "API 6D - Specification for Pipeline Valves",
+      "type": "CONSTRUCTION",
+      "valve_types": ["ESFERA", "GAVETA", "GLOBO", "RETENCAO"],
+      "service_types": ["PIPELINE", "GENERAL"],
+      "precedence": 100,
+      "conflicts_with": ["API_609"],
+      
+      "domains": {
+        "DIAMETRO_NPS": ["2", "3", "4", "6", "8", "10", "12", "14", "16", "18", "20", "24"],
+        "CLASSE_PRESSAO": ["150", "300", "600", "900", "1500", "2500"],
+        "EXTREMIDADE": ["FLANGEADO", "BW", "SW"],
+        "FACE_FLANGE": ["RF", "RTJ"],
+        "MATERIAL_CORPO": ["ASTM_A216_WCB", "ASTM_A352_LCC", "ASTM_A351_CF8M"],
+        "MATERIAL_OBTURADOR": ["ASTM_A182_F316", "ASTM_A564_630", "STELLITE_6"],
+        "MATERIAL_SEDE": ["316SS", "STELLITE_6", "PTFE", "NYLON", "DEVA"],
+        "MATERIAL_HASTE": ["ASTM_A182_F6A", "ASTM_A182_F316", "ASTM_A564_630"]
+      },
+      
+      "constraints": [
+        {
+          "name": "NACE_REQUIRES_LCC",
+          "if": {"NACE": true},
+          "then": {"MATERIAL_CORPO": ["ASTM_A352_LCC"]},
+          "block": ["ASTM_A216_WCB"],
+          "severity": "BLOCK",
+          "message": "NACE MR0175: ASTM A216 WCB não qualificado. Use ASTM A352 LCC.",
+          "source_norm": "NACE_MR0175"
+        },
+        {
+          "name": "FLANGEADO_REQUIRES_FACE",
+          "if": {"EXTREMIDADE": "FLANGEADO"},
+          "then": {"FACE_FLANGE": ["RF", "RTJ"]},
+          "require": ["FACE_FLANGE"],
+          "severity": "BLOCK",
+          "message": "Extremidade flangeada requer seleção de face",
+          "source_norm": "ASME_B16.5"
+        },
+        {
+          "name": "FIRE_TEST_BLOCKS_POLYMER",
+          "if": {"FIRE_TEST": true},
+          "block": {"MATERIAL_SEDE": ["PTFE", "NYLON"]},
+          "severity": "BLOCK",
+          "message": "Teste a fogo não permite sede polimérica. Use metal (Stellite 6).",
+          "source_norm": "API_607"
+        }
+      ]
+    },
+    
+    "API_600_2021": {
+      "code": "API_600_2021",
+      "title": "API 600 - Bolted Bonnet Steel Gate Valves",
+      "type": "CONSTRUCTION",
+      "valve_types": ["GAVETA", "GLOBO"],
+      "service_types": ["PROCESS", "GENERAL"],
+      "inherits_from": "API_6D_2022",
+      "precedence": 90,
+      
+      "domains": {
+        "DIAMETRO_NPS": ["1/2", "3/4", "1", "2", "3", "4", "6", "8", "10", "12"],
+        "CLASSE_PRESSAO": ["150", "300", "600", "900", "1500"],
+        "EXTREMIDADE": ["FLANGEADO", "SW", "NPT"],
+        "FACE_FLANGE": ["RF", "RTJ", "FF"],
+        "TIPO_CASTELO": ["INTEGRAL", "ROSQUEADO", "PRESSIONADO"],
+        "JUNCAO_CORPO_CASTELO": ["ROSQUEADA", "SOLDADA", "BRIDADA"],
+        "MATERIAL_CORPO": ["ASTM_A216_WCB", "ASTM_A352_LCC", "ASTM_A351_CF8M"],
+        "MATERIAL_OBTURADOR": ["ASTM_A182_F316", "STELLITE_6"],
+        "MATERIAL_SEDE": ["STELLITE_6", "316SS"],
+        "MATERIAL_HASTE": ["ASTM_A182_F6A", "ASTM_A182_F316"]
+      },
+      
+      "constraints": []
+    },
+    
+    "NACE_MR0175_2015": {
+      "code": "NACE_MR0175_2015",
+      "title": "NACE MR0175/ISO 15156 - Materials for H2S Service",
+      "type": "MATERIAL",
+      "valve_types": ["ESFERA", "GAVETA", "GLOBO", "RETENCAO", "BORBOLETA", "CONTROLE"],
+      "service_types": ["PIPELINE", "PROCESS", "WELLHEAD", "GENERAL"],
+      "trigger_condition": "NACE == true",
+      
+      "material_qualifications": {
+        "ASTM_A216_WCB": {"qualified": false, "reason": "SSC acima de 0.05 psi H2S"},
+        "ASTM_A352_LCC": {"qualified": true, "max_hardness": "22 HRC", "min_temp": "-46°C"},
+        "ASTM_A351_CF8M": {"qualified": true, "max_hardness": "22 HRC"},
+        "ASTM_A182_F316": {"qualified": true, "max_hardness": "22 HRC"},
+        "ASTM_A182_F6A": {"qualified": false, "reason": "410SS susceptível"}
+      }
+    },
+    
+    "API_607_2016": {
+      "code": "API_607_2016",
+      "title": "API 607 - Fire Test for Quarter-Turn Valves",
+      "type": "PERFORMANCE",
+      "valve_types": ["ESFERA", "BORBOLETA"],
+      "service_types": ["PIPELINE", "PROCESS", "WELLHEAD", "GENERAL"],
+      "trigger_condition": "FIRE_TEST == true",
+      
+      "requirements": {
+        "test_temperature": "1400°F",
+        "duration": "30 minutes",
+        "leakage_allowed": "0.2 ml/inch/min",
+        "required_certification": ["DNV", "ABS", "LR"]
+      },
+      
+      "material_blocks": {
+        "MATERIAL_SEDE": ["PTFE", "NYLON", "PEEK"]
+      }
+    },
+
+    "ISO_15848_2015": {
+      "code": "ISO_15848_2015",
+      "title": "ISO 15848 - Fugitive Emissions Test",
+      "type": "PERFORMANCE",
+      "valve_types": ["ESFERA", "GAVETA", "GLOBO", "BORBOLETA"],
+      "service_types": ["PIPELINE", "PROCESS", "GENERAL"],
+      "trigger_condition": "LOW_EMISSION == true",
+      
+      "requirements": {
+        "max_leak_rate_class_A": "10 ppm",
+        "max_leak_rate_class_B": "100 ppm",
+        "test_cycles": 310,
+        "temperature_classes": ["TA (-29°C)", "TB (-46°C)", "TC (-60°C)"]
+      }
+    },
+
+    "IEC_61508_2010": {
+      "code": "IEC_61508_2010",
+      "title": "IEC 61508 - Functional Safety",
+      "type": "SAFETY",
+      "valve_types": ["ESFERA", "GAVETA", "CONTROLE"],
+      "service_types": ["PIPELINE", "PROCESS", "WELLHEAD"],
+      "trigger_condition": "SIL_REQUIRED == true",
+      
+      "sil_requirements": {
+        "SIL1": {"pfd_avg_min": 0.01, "pfd_avg_max": 0.1, "hft": 0, "sff_min": 0.6},
+        "SIL2": {"pfd_avg_min": 0.001, "pfd_avg_max": 0.01, "hft": 1, "sff_min": 0.9},
+        "SIL3": {"pfd_avg_min": 0.0001, "pfd_avg_max": 0.001, "hft": 1, "sff_min": 0.99}
+      }
+    }
+  },
+  
+  "standard_combinations": {
+    "PIPELINE_ESFERA": ["API_6D_2022", "NACE_MR0175_2015", "API_607_2016"],
+    "PROCESS_GAVETA": ["API_600_2021", "NACE_MR0175_2015"],
+    "PIPELINE_GAVETA": ["API_6D_2022", "NACE_MR0175_2015"],
+    "PROCESS_GLOBO": ["API_600_2021", "NACE_MR0175_2015"],
+    "WELLHEAD_ALL": ["API_6D_2022", "NACE_MR0175_2015", "API_607_2016"]
+  },
+  
+  "fail_closed_rules": {
+    "RULE_001": "Nenhuma especificação sem norma de construção primária",
+    "RULE_002": "Nenhum campo aparece sem norma aplicável",
+    "RULE_003": "Nenhum valor fora do domínio normativo",
+    "RULE_004": "Nenhuma publicação sem 100% cobertura",
+    "RULE_005": "Nenhuma edição técnica pós-publicação sem criar nova versão"
+  },
+
+  "torque_coefficients": {
+    "PTFE": 0.12,
+    "NYLON": 0.15,
+    "METAL": 0.25,
+    "STELLITE_6": 0.22,
+    "316SS": 0.20
+  },
+
+  "base_torque_constants": {
+    "pressure_factor": 0.008,
+    "size_exponent": 2.5,
+    "safety_margin": 1.15
+  }
+}
