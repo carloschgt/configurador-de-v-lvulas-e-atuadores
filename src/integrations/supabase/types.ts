@@ -14,6 +14,105 @@ export type Database = {
   }
   public: {
     Tables: {
+      atributos: {
+        Row: {
+          aplica_em: string | null
+          codigo: string
+          created_at: string | null
+          grupo: string
+          id: string
+          is_active: boolean | null
+          nome: string
+          norma_referencia: string | null
+          obrigatorio: boolean | null
+          observacoes: string | null
+          ordem: number | null
+          tipo: string
+          unidade: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          aplica_em?: string | null
+          codigo: string
+          created_at?: string | null
+          grupo: string
+          id?: string
+          is_active?: boolean | null
+          nome: string
+          norma_referencia?: string | null
+          obrigatorio?: boolean | null
+          observacoes?: string | null
+          ordem?: number | null
+          tipo: string
+          unidade?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          aplica_em?: string | null
+          codigo?: string
+          created_at?: string | null
+          grupo?: string
+          id?: string
+          is_active?: boolean | null
+          nome?: string
+          norma_referencia?: string | null
+          obrigatorio?: boolean | null
+          observacoes?: string | null
+          ordem?: number | null
+          tipo?: string
+          unidade?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      configuracoes_salvas: {
+        Row: {
+          aprovado_em: string | null
+          aprovado_por: string | null
+          codigo_config: string
+          created_at: string | null
+          dados_json: Json
+          id: string
+          resumo_texto: string | null
+          servico: string | null
+          status: string | null
+          tag_cliente: string | null
+          tipo_valvula: string
+          updated_at: string | null
+          usuario_id: string | null
+        }
+        Insert: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          codigo_config: string
+          created_at?: string | null
+          dados_json?: Json
+          id?: string
+          resumo_texto?: string | null
+          servico?: string | null
+          status?: string | null
+          tag_cliente?: string | null
+          tipo_valvula: string
+          updated_at?: string | null
+          usuario_id?: string | null
+        }
+        Update: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          codigo_config?: string
+          created_at?: string | null
+          dados_json?: Json
+          id?: string
+          resumo_texto?: string | null
+          servico?: string | null
+          status?: string | null
+          tag_cliente?: string | null
+          tipo_valvula?: string
+          updated_at?: string | null
+          usuario_id?: string | null
+        }
+        Relationships: []
+      }
       emergency_procedures: {
         Row: {
           backup_procedure: string | null
@@ -94,6 +193,44 @@ export type Database = {
           valve_type?: Database["public"]["Enums"]["valve_type_enum"] | null
         }
         Relationships: []
+      }
+      historico_alteracoes: {
+        Row: {
+          campo_alterado: string
+          configuracao_id: string | null
+          created_at: string | null
+          id: string
+          usuario_id: string | null
+          valor_anterior: string | null
+          valor_novo: string | null
+        }
+        Insert: {
+          campo_alterado: string
+          configuracao_id?: string | null
+          created_at?: string | null
+          id?: string
+          usuario_id?: string | null
+          valor_anterior?: string | null
+          valor_novo?: string | null
+        }
+        Update: {
+          campo_alterado?: string
+          configuracao_id?: string | null
+          created_at?: string | null
+          id?: string
+          usuario_id?: string | null
+          valor_anterior?: string | null
+          valor_novo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "historico_alteracoes_configuracao_id_fkey"
+            columns: ["configuracao_id"]
+            isOneToOne: false
+            referencedRelation: "configuracoes_salvas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       material_compatibility: {
         Row: {
@@ -267,6 +404,53 @@ export type Database = {
           },
         ]
       }
+      opcoes_atributo: {
+        Row: {
+          aplica_em: string | null
+          atributo_codigo: string
+          codigo_interno: string | null
+          condicao: string | null
+          created_at: string | null
+          fonte: string | null
+          id: string
+          is_active: boolean | null
+          ordem: number | null
+          valor: string
+        }
+        Insert: {
+          aplica_em?: string | null
+          atributo_codigo: string
+          codigo_interno?: string | null
+          condicao?: string | null
+          created_at?: string | null
+          fonte?: string | null
+          id?: string
+          is_active?: boolean | null
+          ordem?: number | null
+          valor: string
+        }
+        Update: {
+          aplica_em?: string | null
+          atributo_codigo?: string
+          codigo_interno?: string | null
+          condicao?: string | null
+          created_at?: string | null
+          fonte?: string | null
+          id?: string
+          is_active?: boolean | null
+          ordem?: number | null
+          valor?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opcoes_atributo_atributo_codigo_fkey"
+            columns: ["atributo_codigo"]
+            isOneToOne: false
+            referencedRelation: "atributos"
+            referencedColumns: ["codigo"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -291,6 +475,54 @@ export type Database = {
           full_name?: string | null
           id?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      regras_validacao: {
+        Row: {
+          acao: string
+          ativo: boolean | null
+          created_at: string | null
+          entao_atributo: string
+          id: string
+          mensagem_aviso: string | null
+          mensagem_erro: string | null
+          prioridade: number | null
+          se_atributo: string
+          se_valor: string
+          tipo_valvula: string | null
+          valor_sugerido: string | null
+          valores_permitidos: string | null
+        }
+        Insert: {
+          acao: string
+          ativo?: boolean | null
+          created_at?: string | null
+          entao_atributo: string
+          id?: string
+          mensagem_aviso?: string | null
+          mensagem_erro?: string | null
+          prioridade?: number | null
+          se_atributo: string
+          se_valor: string
+          tipo_valvula?: string | null
+          valor_sugerido?: string | null
+          valores_permitidos?: string | null
+        }
+        Update: {
+          acao?: string
+          ativo?: boolean | null
+          created_at?: string | null
+          entao_atributo?: string
+          id?: string
+          mensagem_aviso?: string | null
+          mensagem_erro?: string | null
+          prioridade?: number | null
+          se_atributo?: string
+          se_valor?: string
+          tipo_valvula?: string | null
+          valor_sugerido?: string | null
+          valores_permitidos?: string | null
         }
         Relationships: []
       }
@@ -486,6 +718,39 @@ export type Database = {
           },
         ]
       }
+      sugestoes_material: {
+        Row: {
+          atributo_codigo: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          mensagem: string | null
+          prioridade: number | null
+          servico: string
+          valor_sugerido: string
+        }
+        Insert: {
+          atributo_codigo: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          mensagem?: string | null
+          prioridade?: number | null
+          servico: string
+          valor_sugerido: string
+        }
+        Update: {
+          atributo_codigo?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          mensagem?: string | null
+          prioridade?: number | null
+          servico?: string
+          valor_sugerido?: string
+        }
+        Relationships: []
+      }
       system_health_log: {
         Row: {
           active_catalog_count: number | null
@@ -513,6 +778,39 @@ export type Database = {
           is_healthy?: boolean
           issues?: Json | null
           norm_coverage_percent?: number | null
+        }
+        Relationships: []
+      }
+      tipos_valvula: {
+        Row: {
+          ativo: boolean | null
+          created_at: string | null
+          descricao: string | null
+          icone: string | null
+          id: string
+          nome: string
+          ordem: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          created_at?: string | null
+          descricao?: string | null
+          icone?: string | null
+          id?: string
+          nome: string
+          ordem?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          created_at?: string | null
+          descricao?: string | null
+          icone?: string | null
+          id?: string
+          nome?: string
+          ordem?: number | null
+          updated_at?: string | null
         }
         Relationships: []
       }
