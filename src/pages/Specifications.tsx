@@ -17,7 +17,8 @@ import {
   Eye,
   Download,
   MoreHorizontal,
-  Plus
+  Plus,
+  Edit
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -25,6 +26,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import SpecificationDetailDialog from "@/components/specifications/SpecificationDetailDialog";
 
 interface SpecificationsProps {
   onNavigate: (page: string) => void;
@@ -41,7 +43,21 @@ const mockSpecs = [
     class: "600",
     status: "APPROVED", 
     createdAt: "2024-01-12",
-    createdBy: "João Silva"
+    createdBy: "João Silva",
+    endType: "FLANGEADO",
+    flangeFace: "RF",
+    serviceType: "PIPELINE",
+    actuationType: "PNEUMÁTICO",
+    bodyMaterial: "ASTM A352 LCC",
+    obturatorMaterial: "ASTM A182 F316",
+    seatMaterial: "STELLITE 6",
+    stemMaterial: "ASTM A564 630",
+    naceCompliant: true,
+    fireTest: true,
+    lowFugitiveEmission: false,
+    silCertification: null,
+    constructionStandard: "API 6D",
+    conformityScore: 100
   },
   { 
     id: "2",
@@ -53,7 +69,21 @@ const mockSpecs = [
     class: "300",
     status: "SUBMITTED", 
     createdAt: "2024-01-11",
-    createdBy: "Maria Santos"
+    createdBy: "Maria Santos",
+    endType: "BW",
+    flangeFace: null,
+    serviceType: "PROCESS",
+    actuationType: "ELÉTRICO",
+    bodyMaterial: "ASTM A216 WCB",
+    obturatorMaterial: "ASTM A182 F6A",
+    seatMaterial: "316SS",
+    stemMaterial: "ASTM A182 F6A",
+    naceCompliant: false,
+    fireTest: false,
+    lowFugitiveEmission: true,
+    silCertification: "SIL2",
+    constructionStandard: "API 600",
+    conformityScore: 95
   },
   { 
     id: "3",
@@ -65,7 +95,21 @@ const mockSpecs = [
     class: "150",
     status: "DRAFT", 
     createdAt: "2024-01-10",
-    createdBy: "Carlos Oliveira"
+    createdBy: "Carlos Oliveira",
+    endType: "FLANGEADO",
+    flangeFace: "RF",
+    serviceType: "GENERAL",
+    actuationType: "MANUAL",
+    bodyMaterial: "ASTM A216 WCB",
+    obturatorMaterial: "ASTM A182 F316",
+    seatMaterial: "316SS",
+    stemMaterial: "ASTM A182 F316",
+    naceCompliant: false,
+    fireTest: false,
+    lowFugitiveEmission: false,
+    silCertification: null,
+    constructionStandard: "API 600",
+    conformityScore: 100
   },
   { 
     id: "4",
@@ -77,7 +121,21 @@ const mockSpecs = [
     class: "150",
     status: "PUBLISHED", 
     createdAt: "2024-01-09",
-    createdBy: "Ana Costa"
+    createdBy: "Ana Costa",
+    endType: "WAFER",
+    flangeFace: null,
+    serviceType: "PROCESS",
+    actuationType: "PNEUMÁTICO",
+    bodyMaterial: "CF8M",
+    obturatorMaterial: "ASTM A351 CF8M",
+    seatMaterial: "PTFE",
+    stemMaterial: "ASTM A182 F316",
+    naceCompliant: false,
+    fireTest: true,
+    lowFugitiveEmission: true,
+    silCertification: null,
+    constructionStandard: "API 609",
+    conformityScore: 100
   },
   { 
     id: "5",
@@ -89,13 +147,29 @@ const mockSpecs = [
     class: "600",
     status: "APPROVED", 
     createdAt: "2024-01-08",
-    createdBy: "Pedro Lima"
+    createdBy: "Pedro Lima",
+    endType: "FLANGEADO",
+    flangeFace: "RTJ",
+    serviceType: "WELLHEAD",
+    actuationType: "PNEUMÁTICO",
+    bodyMaterial: "ASTM A352 LCC",
+    obturatorMaterial: "STELLITE 6",
+    seatMaterial: "STELLITE 6",
+    stemMaterial: "ASTM A564 630",
+    naceCompliant: true,
+    fireTest: true,
+    lowFugitiveEmission: true,
+    silCertification: "SIL3",
+    constructionStandard: "API 6D",
+    conformityScore: 100
   },
 ];
 
 const Specifications = ({ onNavigate }: SpecificationsProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [selectedSpec, setSelectedSpec] = useState<typeof mockSpecs[0] | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -222,14 +296,8 @@ const Specifications = ({ onNavigate }: SpecificationsProps) => {
                       size="icon" 
                       className="h-8 w-8"
                       onClick={() => {
-                        // Navigate to spec detail view (could be a modal or separate page)
-                        console.log('View spec:', spec.id);
-                        // For now, show toast with spec details
-                        import("sonner").then(({ toast }) => {
-                          toast.info(`Especificação: ${spec.code}`, {
-                            description: `Válvula ${spec.typeLabel} • ${spec.diameter} • Class ${spec.class}\nStatus: ${spec.status}`,
-                          });
-                        });
+                        setSelectedSpec(spec);
+                        setIsDialogOpen(true);
                       }}
                     >
                       <Eye className="h-4 w-4" />
@@ -240,11 +308,8 @@ const Specifications = ({ onNavigate }: SpecificationsProps) => {
                         size="icon" 
                         className="h-8 w-8"
                         onClick={() => {
-                          import("sonner").then(({ toast }) => {
-                            toast.info("Download PDF", {
-                              description: `Gerando PDF para ${spec.code}...`,
-                            });
-                          });
+                          setSelectedSpec(spec);
+                          setIsDialogOpen(true);
                         }}
                       >
                         <Download className="h-4 w-4" />
@@ -261,36 +326,24 @@ const Specifications = ({ onNavigate }: SpecificationsProps) => {
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem
                         onClick={() => {
-                          import("sonner").then(({ toast }) => {
-                            toast.info(`Especificação: ${spec.code}`, {
-                              description: `Válvula ${spec.typeLabel} • ${spec.diameter} • Class ${spec.class}\nStatus: ${spec.status}`,
-                            });
-                          });
+                          setSelectedSpec(spec);
+                          setIsDialogOpen(true);
                         }}
                       >
                         <Eye className="h-4 w-4 mr-2" />
                         Ver detalhes
                       </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => {
-                          import("sonner").then(({ toast }) => {
-                            toast.info("Editar Especificação", {
-                              description: `Abrindo editor para ${spec.code}...`,
-                            });
-                          });
-                        }}
-                      >
-                        <FileText className="h-4 w-4 mr-2" />
-                        Editar
-                      </DropdownMenuItem>
+                      {spec.status === "DRAFT" && (
+                        <DropdownMenuItem onClick={() => onNavigate("configurator")}>
+                          <Edit className="h-4 w-4 mr-2" />
+                          Editar
+                        </DropdownMenuItem>
+                      )}
                       {spec.status === "PUBLISHED" && (
                         <DropdownMenuItem
                           onClick={() => {
-                            import("sonner").then(({ toast }) => {
-                              toast.info("Download PDF", {
-                                description: `Gerando PDF para ${spec.code}...`,
-                              });
-                            });
+                            setSelectedSpec(spec);
+                            setIsDialogOpen(true);
                           }}
                         >
                           <Download className="h-4 w-4 mr-2" />
@@ -316,6 +369,16 @@ const Specifications = ({ onNavigate }: SpecificationsProps) => {
           </Card>
         )}
       </div>
+
+      {/* Detail Dialog */}
+      <SpecificationDetailDialog 
+        spec={selectedSpec}
+        isOpen={isDialogOpen}
+        onClose={() => {
+          setIsDialogOpen(false);
+          setSelectedSpec(null);
+        }}
+      />
     </div>
   );
 };
