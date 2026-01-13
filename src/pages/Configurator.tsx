@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, ArrowRight, Save, FileDown } from "lucide-react";
@@ -14,7 +14,21 @@ import LiveConformityPanel from "@/components/configurator/LiveConformityPanel";
 import TorqueCalculator from "@/components/configurator/TorqueCalculator";
 import { useNormValidation } from "@/hooks/useNormValidation";
 
-import { ValveConfiguration } from "@/types/valve";
+import { ConstructionStandard, ValveConfiguration } from "@/types/valve";
+
+const mapNormCodeToConstructionStandard = (
+  normCode: string | null | undefined,
+): ConstructionStandard | null => {
+  if (!normCode) return null;
+
+  const code = normCode.toUpperCase();
+
+  if (code.startsWith("API_6D") || code.includes("API 6D")) return "API 6D";
+  if (code.startsWith("ISO_14313") || code.includes("ISO 14313")) return "ISO 14313";
+  if (code.includes("NBR_15827") || code.includes("ABNT NBR 15827")) return "ABNT NBR 15827";
+
+  return null;
+};
 
 const STEPS = [
   { id: 1, title: "Básico", description: "Tipo e dimensões" },
@@ -48,6 +62,31 @@ const Configurator = () => {
   const handleConfigChange = (updates: Partial<ValveConfiguration>) => {
     setConfig((prev) => ({ ...prev, ...updates }));
   };
+
+  const handleGatewayValidSelection = useCallback(
+    (data: { valveType: unknown; constructionStandard: string }) => {
+      const mapped = mapNormCodeToConstructionStandard(data.constructionStandard);
+
+      setConfig((prev) => {
+        const next: ValveConfiguration = {
+          ...prev,
+          valveType: (data.valveType as any) ?? prev.valveType,
+          constructionStandard: mapped ?? prev.constructionStandard,
+        };
+
+        // evita re-render/efeitos quando nada mudou
+        if (
+          next.valveType === prev.valveType &&
+          next.constructionStandard === prev.constructionStandard
+        ) {
+          return prev;
+        }
+
+        return next;
+      });
+    },
+    [],
+  );
 
   const canProceed = () => {
     switch (currentStep) {
@@ -144,7 +183,7 @@ const Configurator = () => {
       </Card>
 
       {/* Main Content wrapped in NormSupremaGateway */}
-      <NormSupremaGateway>
+      <NormSupremaGateway onValidSelection={handleGatewayValidSelection}>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Form Area */}
           <div className="lg:col-span-2 space-y-6">
