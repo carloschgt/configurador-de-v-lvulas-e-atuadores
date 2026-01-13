@@ -282,31 +282,52 @@ const NormSupremaGateway = ({ children, onValidSelection, onInvalidSelection }: 
         </CardContent>
       </Card>
 
-      {/* Applicable Norms Tree */}
+      {/* Applicable Norms Tree - Selectable */}
       {validationResult?.isValid && selectedStandard && (
         <Card className="card-industrial">
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Árvore Norma-Suprema</CardTitle>
-            <CardDescription>Normas aplicáveis a esta configuração</CardDescription>
+            <CardDescription>Clique em uma norma para selecioná-la como principal</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {/* Show selected standard first */}
-              <div className="flex items-center gap-2 p-2 rounded-lg bg-primary/10 border border-primary/20">
-                <Check className="h-4 w-4 text-success" />
-                <span className="text-sm font-mono">{selectedStandard.replace(/_/g, ' ')}</span>
-                <Badge variant="outline" className="ml-auto text-xs">Principal</Badge>
-              </div>
-              {/* Show other applicable norms (excluding selected) */}
+              {/* Show all construction standards as selectable */}
+              {validationResult.constructionStandards.map((std: any) => (
+                <button
+                  key={std.code}
+                  onClick={() => setSelectedStandard(std.code)}
+                  className={cn(
+                    "w-full flex items-center gap-2 p-3 rounded-lg transition-all duration-200 text-left",
+                    selectedStandard === std.code
+                      ? "bg-primary/10 border-2 border-primary/40 ring-2 ring-primary/20"
+                      : "bg-muted/50 border-2 border-transparent hover:border-primary/30 hover:bg-accent/50"
+                  )}
+                >
+                  <Check className={cn(
+                    "h-4 w-4",
+                    selectedStandard === std.code ? "text-primary" : "text-success"
+                  )} />
+                  <div className="flex-1">
+                    <span className="text-sm font-mono font-medium">{std.code.replace(/_/g, ' ')}</span>
+                    <p className="text-xs text-muted-foreground">{std.title}</p>
+                  </div>
+                  {selectedStandard === std.code && (
+                    <Badge className="bg-primary text-primary-foreground">Principal</Badge>
+                  )}
+                </button>
+              ))}
+              
+              {/* Show other applicable norms (non-construction, non-selectable) */}
               {validationResult.applicableNorms
-                .filter((norm: string) => norm !== selectedStandard)
+                .filter((norm: string) => !validationResult.constructionStandards.some((s: any) => s.code === norm))
                 .map((norm: string) => (
                   <div 
                     key={norm}
-                    className="flex items-center gap-2 p-2 rounded-lg bg-muted/50"
+                    className="flex items-center gap-2 p-3 rounded-lg bg-muted/30 border border-dashed border-muted-foreground/30"
                   >
                     <Check className="h-4 w-4 text-success" />
-                    <span className="text-sm font-mono">{norm.replace(/_/g, ' ')}</span>
+                    <span className="text-sm font-mono text-muted-foreground">{norm.replace(/_/g, ' ')}</span>
+                    <Badge variant="secondary" className="ml-auto text-xs">Complementar</Badge>
                   </div>
                 ))}
             </div>
