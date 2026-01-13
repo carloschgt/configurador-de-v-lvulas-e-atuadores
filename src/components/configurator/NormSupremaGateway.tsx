@@ -7,6 +7,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { cn } from '@/lib/utils';
 import { AlertTriangle, Lock, Check, Info } from 'lucide-react';
 import { useNormValidation } from '@/hooks/useNormValidation';
+import { useNormDecisionLog } from '@/hooks/useNormDecisionLog';
 import type { Database } from '@/integrations/supabase/types';
 
 // Import valve images
@@ -56,6 +57,7 @@ const NormSupremaGateway = ({ children, onValidSelection, onInvalidSelection }: 
   const [validationResult, setValidationResult] = useState<any>(null);
 
   const { validateCombination, isValidating } = useNormValidation();
+  const { logNormSelection } = useNormDecisionLog();
 
   // Validate combination when valve or service changes
   useEffect(() => {
@@ -82,9 +84,19 @@ const NormSupremaGateway = ({ children, onValidSelection, onInvalidSelection }: 
     validate();
   }, [selectedValve, selectedService, validateCombination]);
 
-  // Notify parent when all selections are valid
+  // Notify parent when all selections are valid and log decision
   useEffect(() => {
     if (selectedValve && selectedService && selectedStandard && validationResult?.isValid) {
+      // Log the norm selection decision
+      logNormSelection(
+        undefined, // specId - not created yet
+        selectedValve,
+        selectedService,
+        selectedStandard,
+        validationResult.applicableNorms,
+        validationResult.rejectedNorms || []
+      );
+
       onValidSelection?.({
         valveType: selectedValve,
         serviceType: selectedService,
@@ -96,7 +108,7 @@ const NormSupremaGateway = ({ children, onValidSelection, onInvalidSelection }: 
     } else {
       onInvalidSelection?.();
     }
-  }, [selectedValve, selectedService, selectedStandard, validationResult, onValidSelection, onInvalidSelection]);
+  }, [selectedValve, selectedService, selectedStandard, validationResult, onValidSelection, onInvalidSelection, logNormSelection]);
 
   const isStandardAvailable = (standardCode: string) => {
     return validationResult?.constructionStandards?.some(s => s.code === standardCode);
