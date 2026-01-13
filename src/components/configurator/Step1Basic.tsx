@@ -28,30 +28,6 @@ interface Step1BasicProps {
 const Step1Basic = ({ config, onChange }: Step1BasicProps) => {
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Valve Type Selection */}
-      <div className="space-y-3">
-        <Label className="text-base font-semibold">Tipo de Válvula *</Label>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          {VALVE_TYPES.map((valve) => (
-            <button
-              key={valve.type}
-              onClick={() => onChange({ valveType: valve.type })}
-              className={cn(
-                "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all duration-200 hover:border-primary/50",
-                config.valveType === valve.type
-                  ? "border-primary bg-accent"
-                  : "border-border bg-card hover:bg-accent/50"
-              )}
-            >
-              <span className="text-2xl">{valve.icon}</span>
-              <span className="font-medium text-sm">{valve.label}</span>
-              <span className="text-xs text-muted-foreground text-center line-clamp-2">
-                {valve.description}
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
 
       {/* Construction Standard */}
       <Card className="card-industrial">

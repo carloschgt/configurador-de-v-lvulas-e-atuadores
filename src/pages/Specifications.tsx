@@ -217,11 +217,36 @@ const Specifications = ({ onNavigate }: SpecificationsProps) => {
                   {getStatusBadge(spec.status)}
                   
                   <div className="hidden sm:flex items-center gap-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8"
+                      onClick={() => {
+                        // Navigate to spec detail view (could be a modal or separate page)
+                        console.log('View spec:', spec.id);
+                        // For now, show toast with spec details
+                        import("sonner").then(({ toast }) => {
+                          toast.info(`Especificação: ${spec.code}`, {
+                            description: `Válvula ${spec.typeLabel} • ${spec.diameter} • Class ${spec.class}\nStatus: ${spec.status}`,
+                          });
+                        });
+                      }}
+                    >
                       <Eye className="h-4 w-4" />
                     </Button>
                     {spec.status === "PUBLISHED" && (
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8"
+                        onClick={() => {
+                          import("sonner").then(({ toast }) => {
+                            toast.info("Download PDF", {
+                              description: `Gerando PDF para ${spec.code}...`,
+                            });
+                          });
+                        }}
+                      >
                         <Download className="h-4 w-4" />
                       </Button>
                     )}
@@ -234,16 +259,40 @@ const Specifications = ({ onNavigate }: SpecificationsProps) => {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          import("sonner").then(({ toast }) => {
+                            toast.info(`Especificação: ${spec.code}`, {
+                              description: `Válvula ${spec.typeLabel} • ${spec.diameter} • Class ${spec.class}\nStatus: ${spec.status}`,
+                            });
+                          });
+                        }}
+                      >
                         <Eye className="h-4 w-4 mr-2" />
                         Ver detalhes
                       </DropdownMenuItem>
-                      <DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          import("sonner").then(({ toast }) => {
+                            toast.info("Editar Especificação", {
+                              description: `Abrindo editor para ${spec.code}...`,
+                            });
+                          });
+                        }}
+                      >
                         <FileText className="h-4 w-4 mr-2" />
                         Editar
                       </DropdownMenuItem>
                       {spec.status === "PUBLISHED" && (
-                        <DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            import("sonner").then(({ toast }) => {
+                              toast.info("Download PDF", {
+                                description: `Gerando PDF para ${spec.code}...`,
+                              });
+                            });
+                          }}
+                        >
                           <Download className="h-4 w-4 mr-2" />
                           Baixar PDF
                         </DropdownMenuItem>

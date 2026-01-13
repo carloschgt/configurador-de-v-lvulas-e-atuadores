@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "@/components/layout/Header";
 import Sidebar from "@/components/layout/Sidebar";
 import Dashboard from "@/pages/Dashboard";
 import Configurator from "@/pages/Configurator";
 import Specifications from "@/pages/Specifications";
+import ApprovalsPage from "@/pages/Approvals";
+import CatalogPage from "@/pages/Catalog";
+import SettingsPage from "@/pages/Settings";
 import EmergencyModeBanner from "@/components/EmergencyModeBanner";
 import { useSystemHealth } from "@/hooks/useSystemHealth";
 
@@ -20,6 +23,15 @@ const Index = () => {
     setActivePage(page);
   };
 
+  // Listen for navigation events from header
+  useEffect(() => {
+    const handleNavEvent = (e: CustomEvent) => {
+      handleNavigate(e.detail);
+    };
+    window.addEventListener('navigate', handleNavEvent as EventListener);
+    return () => window.removeEventListener('navigate', handleNavEvent as EventListener);
+  }, [isHealthy]);
+
   const renderPage = () => {
     switch (activePage) {
       case "dashboard":
@@ -29,23 +41,11 @@ const Index = () => {
       case "specs":
         return <Specifications onNavigate={handleNavigate} />;
       case "approval":
-        return (
-          <div className="flex items-center justify-center min-h-[60vh]">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold mb-2">Aprovações</h2>
-              <p className="text-muted-foreground">Em desenvolvimento...</p>
-            </div>
-          </div>
-        );
+        return <ApprovalsPage />;
       case "catalog":
-        return (
-          <div className="flex items-center justify-center min-h-[60vh]">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold mb-2">Catálogo</h2>
-              <p className="text-muted-foreground">Em desenvolvimento...</p>
-            </div>
-          </div>
-        );
+        return <CatalogPage />;
+      case "settings":
+        return <SettingsPage />;
       default:
         return <Dashboard onNavigate={handleNavigate} />;
     }
