@@ -13,7 +13,8 @@ type ValveType = Database['public']['Enums']['valve_type_enum'];
 type ServiceType = Database['public']['Enums']['service_type'];
 
 interface NormSupremaGatewayProps {
-  onValidSelection: (data: {
+  children: React.ReactNode;
+  onValidSelection?: (data: {
     valveType: ValveType;
     serviceType: ServiceType;
     constructionStandard: string;
@@ -21,7 +22,7 @@ interface NormSupremaGatewayProps {
     materials: any;
     applicableNorms: string[];
   }) => void;
-  onInvalidSelection: () => void;
+  onInvalidSelection?: () => void;
 }
 
 const VALVE_TYPES: { type: ValveType; label: string; icon: string; description: string }[] = [
@@ -40,7 +41,7 @@ const SERVICE_TYPES: { type: ServiceType; label: string; description: string }[]
   { type: 'GENERAL', label: 'Uso Geral', description: 'Aplicações industriais gerais' },
 ];
 
-const NormSupremaGateway = ({ onValidSelection, onInvalidSelection }: NormSupremaGatewayProps) => {
+const NormSupremaGateway = ({ children, onValidSelection, onInvalidSelection }: NormSupremaGatewayProps) => {
   const [selectedValve, setSelectedValve] = useState<ValveType | null>(null);
   const [selectedService, setSelectedService] = useState<ServiceType | null>(null);
   const [selectedStandard, setSelectedStandard] = useState<string | null>(null);
@@ -76,7 +77,7 @@ const NormSupremaGateway = ({ onValidSelection, onInvalidSelection }: NormSuprem
   // Notify parent when all selections are valid
   useEffect(() => {
     if (selectedValve && selectedService && selectedStandard && validationResult?.isValid) {
-      onValidSelection({
+      onValidSelection?.({
         valveType: selectedValve,
         serviceType: selectedService,
         constructionStandard: selectedStandard,
@@ -85,7 +86,7 @@ const NormSupremaGateway = ({ onValidSelection, onInvalidSelection }: NormSuprem
         applicableNorms: validationResult.applicableNorms
       });
     } else {
-      onInvalidSelection();
+      onInvalidSelection?.();
     }
   }, [selectedValve, selectedService, selectedStandard, validationResult, onValidSelection, onInvalidSelection]);
 
@@ -272,6 +273,13 @@ const NormSupremaGateway = ({ onValidSelection, onInvalidSelection }: NormSuprem
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Render children when valid selection is made */}
+      {selectedValve && selectedService && selectedStandard && validationResult?.isValid && (
+        <div className="mt-6">
+          {children}
+        </div>
       )}
     </div>
   );
