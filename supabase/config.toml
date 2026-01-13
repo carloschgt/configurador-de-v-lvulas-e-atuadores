@@ -1,1 +1,7 @@
 project_id = "qwjmakqbkdxnhsbclqqs"
+
+[functions.norm-health]
+verify_jwt = false
+
+[functions.calculate-torque]
+verify_jwt = false
