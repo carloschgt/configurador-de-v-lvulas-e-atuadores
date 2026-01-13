@@ -291,21 +291,24 @@ const NormSupremaGateway = ({ children, onValidSelection, onInvalidSelection }: 
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {validationResult.applicableNorms.map((norm: string, idx: number) => (
-                <div 
-                  key={norm}
-                  className={cn(
-                    "flex items-center gap-2 p-2 rounded-lg",
-                    idx === 0 ? "bg-primary/10 border border-primary/20" : "bg-muted/50"
-                  )}
-                >
-                  <Check className="h-4 w-4 text-success" />
-                  <span className="text-sm font-mono">{norm.replace(/_/g, ' ')}</span>
-                  {idx === 0 && (
-                    <Badge variant="outline" className="ml-auto text-xs">Principal</Badge>
-                  )}
-                </div>
-              ))}
+              {/* Show selected standard first */}
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-primary/10 border border-primary/20">
+                <Check className="h-4 w-4 text-success" />
+                <span className="text-sm font-mono">{selectedStandard.replace(/_/g, ' ')}</span>
+                <Badge variant="outline" className="ml-auto text-xs">Principal</Badge>
+              </div>
+              {/* Show other applicable norms (excluding selected) */}
+              {validationResult.applicableNorms
+                .filter((norm: string) => norm !== selectedStandard)
+                .map((norm: string) => (
+                  <div 
+                    key={norm}
+                    className="flex items-center gap-2 p-2 rounded-lg bg-muted/50"
+                  >
+                    <Check className="h-4 w-4 text-success" />
+                    <span className="text-sm font-mono">{norm.replace(/_/g, ' ')}</span>
+                  </div>
+                ))}
             </div>
           </CardContent>
         </Card>
