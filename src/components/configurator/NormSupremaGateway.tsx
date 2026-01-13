@@ -9,6 +9,14 @@ import { AlertTriangle, Lock, Check, Info } from 'lucide-react';
 import { useNormValidation } from '@/hooks/useNormValidation';
 import type { Database } from '@/integrations/supabase/types';
 
+// Import valve images
+import valveEsfera from '@/assets/valves/valve-esfera.png';
+import valveGlobo from '@/assets/valves/valve-globo.png';
+import valveGaveta from '@/assets/valves/valve-gaveta.png';
+import valveRetencao from '@/assets/valves/valve-retencao.png';
+import valveBorboleta from '@/assets/valves/valve-borboleta.png';
+import valveControle from '@/assets/valves/valve-controle.png';
+
 type ValveType = Database['public']['Enums']['valve_type_enum'];
 type ServiceType = Database['public']['Enums']['service_type'];
 
@@ -25,13 +33,13 @@ interface NormSupremaGatewayProps {
   onInvalidSelection?: () => void;
 }
 
-const VALVE_TYPES: { type: ValveType; label: string; icon: string; description: string }[] = [
-  { type: 'ESFERA', label: 'Esfera', icon: '⚙️', description: 'Válvula de esfera para controle de fluxo' },
-  { type: 'GLOBO', label: 'Globo', icon: '🔵', description: 'Válvula globo para regulagem precisa' },
-  { type: 'GAVETA', label: 'Gaveta', icon: '🚪', description: 'Válvula gaveta para bloqueio total' },
-  { type: 'RETENCAO', label: 'Retenção', icon: '↩️', description: 'Válvula de retenção anti-retorno' },
-  { type: 'BORBOLETA', label: 'Borboleta', icon: '🦋', description: 'Válvula borboleta compacta' },
-  { type: 'CONTROLE', label: 'Controle', icon: '🎛️', description: 'Válvula de controle proporcional' },
+const VALVE_TYPES: { type: ValveType; label: string; image: string; description: string }[] = [
+  { type: 'ESFERA', label: 'Esfera', image: valveEsfera, description: 'Válvula de esfera para controle de fluxo' },
+  { type: 'GLOBO', label: 'Globo', image: valveGlobo, description: 'Válvula globo para regulagem precisa' },
+  { type: 'GAVETA', label: 'Gaveta', image: valveGaveta, description: 'Válvula gaveta para bloqueio total' },
+  { type: 'RETENCAO', label: 'Retenção', image: valveRetencao, description: 'Válvula de retenção anti-retorno' },
+  { type: 'BORBOLETA', label: 'Borboleta', image: valveBorboleta, description: 'Válvula borboleta compacta' },
+  { type: 'CONTROLE', label: 'Controle', image: valveControle, description: 'Válvula de controle proporcional' },
 ];
 
 const SERVICE_TYPES: { type: ServiceType; label: string; description: string }[] = [
@@ -115,20 +123,36 @@ const NormSupremaGateway = ({ children, onValidSelection, onInvalidSelection }: 
           <CardDescription>Selecione o tipo de válvula a configurar</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {VALVE_TYPES.map((valve) => (
               <button
                 key={valve.type}
                 onClick={() => setSelectedValve(valve.type)}
                 className={cn(
-                  "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all duration-200",
+                  "group flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all duration-200",
                   selectedValve === valve.type
                     ? "border-primary bg-accent ring-2 ring-primary/20"
-                    : "border-border bg-card hover:border-primary/50 hover:bg-accent/50"
+                    : "border-border bg-card hover:border-primary/50 hover:bg-accent/50 hover:scale-[1.02]"
                 )}
               >
-                <span className="text-2xl">{valve.icon}</span>
-                <span className="font-medium text-sm">{valve.label}</span>
+                <div className="relative w-24 h-24 md:w-28 md:h-28 flex items-center justify-center">
+                  <img 
+                    src={valve.image} 
+                    alt={`Válvula ${valve.label}`}
+                    className={cn(
+                      "w-full h-full object-contain transition-all duration-200",
+                      selectedValve === valve.type 
+                        ? "drop-shadow-lg" 
+                        : "group-hover:drop-shadow-md"
+                    )}
+                  />
+                </div>
+                <span className={cn(
+                  "font-semibold text-sm md:text-base",
+                  selectedValve === valve.type ? "text-primary" : "text-foreground"
+                )}>
+                  {valve.label}
+                </span>
                 <span className="text-xs text-muted-foreground text-center line-clamp-2">
                   {valve.description}
                 </span>
