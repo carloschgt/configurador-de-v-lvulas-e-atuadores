@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, ArrowRight, Save, FileDown } from "lucide-react";
@@ -12,9 +12,11 @@ import ConfigurationSummary from "@/components/configurator/ConfigurationSummary
 import NormSupremaGateway from "@/components/configurator/NormSupremaGateway";
 import LiveConformityPanel from "@/components/configurator/LiveConformityPanel";
 import TorqueCalculator from "@/components/configurator/TorqueCalculator";
+import ImexDescriptionCard from "@/components/configurator/ImexDescriptionCard";
 import { useNormValidation } from "@/hooks/useNormValidation";
 
 import { ConstructionStandard, ValveConfiguration } from "@/types/valve";
+import type { ImexSpec } from "@/lib/imex-description";
 
 const mapNormCodeToConstructionStandard = (
   normCode: string | null | undefined,
@@ -58,6 +60,24 @@ const Configurator = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [config, setConfig] = useState<ValveConfiguration>(initialConfig);
   const { validateCombination, isValidating } = useNormValidation();
+
+  // Build IMEX spec from current configuration
+  const imexSpec: ImexSpec = useMemo(() => ({
+    valveType: config.valveType,
+    diameterNPS: config.diameterNPS,
+    pressureClass: config.pressureClass,
+    endType: config.endType,
+    flangeFace: config.flangeFace,
+    bodyMaterial: config.bodyMaterial,
+    seatMaterial: config.seatMaterial,
+    obturatorMaterial: config.obturatorMaterial,
+    stemMaterial: config.stemMaterial,
+    actuationType: config.actuationType,
+    fireTest: config.fireTest,
+    lowFugitiveEmission: config.lowFugitiveEmission,
+    silCertification: config.silCertification,
+    naceCompliant: config.naceCompliant,
+  }), [config]);
 
   const handleConfigChange = (updates: Partial<ValveConfiguration>) => {
     setConfig((prev) => ({ ...prev, ...updates }));
@@ -197,6 +217,9 @@ const Configurator = () => {
                 seatMaterial={config.seatMaterial || undefined}
               />
             )}
+
+            {/* IMEX Description Card - Above navigation/save buttons */}
+            <ImexDescriptionCard spec={imexSpec} />
 
             {/* Navigation */}
             <div className="flex items-center justify-between pt-4">
