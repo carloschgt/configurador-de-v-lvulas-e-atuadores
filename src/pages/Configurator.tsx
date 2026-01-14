@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, ArrowRight, Save, FileDown } from "lucide-react";
+import { ArrowLeft, ArrowRight, Save } from "lucide-react";
 import { toast } from "sonner";
 
 import StepIndicator from "@/components/configurator/StepIndicator";
@@ -13,7 +13,10 @@ import NormSupremaGateway from "@/components/configurator/NormSupremaGateway";
 import LiveConformityPanel from "@/components/configurator/LiveConformityPanel";
 import TorqueCalculator from "@/components/configurator/TorqueCalculator";
 import ImexDescriptionCard from "@/components/configurator/ImexDescriptionCard";
+import FailClosedActions from "@/components/configurator/FailClosedActions";
 import { useNormValidation } from "@/hooks/useNormValidation";
+import { useFailClosedValidation, prepareForSave } from "@/hooks/useFailClosedValidation";
+import { useConfiguracoesSalvas } from "@/hooks/useConfiguracoesSalvas";
 
 import { ConstructionStandard, ValveConfiguration } from "@/types/valve";
 import type { ImexSpec } from "@/lib/imex-description";
@@ -59,7 +62,9 @@ const initialConfig: ValveConfiguration = {
 const Configurator = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [config, setConfig] = useState<ValveConfiguration>(initialConfig);
+  const [savedConfigId, setSavedConfigId] = useState<string | null>(null);
   const { validateCombination, isValidating } = useNormValidation();
+  const { salvarConfiguracao, isLoading: isSaving } = useConfiguracoesSalvas();
 
   // Build IMEX spec from current configuration
   const imexSpec: ImexSpec = useMemo(() => ({
@@ -78,6 +83,9 @@ const Configurator = () => {
     silCertification: config.silCertification,
     naceCompliant: config.naceCompliant,
   }), [config]);
+
+  // Fail-closed validation
+  const failClosedValidation = useFailClosedValidation(imexSpec);
 
   const handleConfigChange = (updates: Partial<ValveConfiguration>) => {
     setConfig((prev) => ({ ...prev, ...updates }));
@@ -145,22 +153,58 @@ const Configurator = () => {
     }
   };
 
-  const handleSave = () => {
-    toast.success("Especificação salva como rascunho!", {
-      description: "Você pode continuar editando a qualquer momento.",
-    });
+  const handleSaveDraft = async () => {
+    if (!config.valveType) {
+      toast.error("Selecione um tipo de válvula");
+      return;
+    }
+
+    // Prepare data with fail-closed validation info
+    const saveData = prepareForSave(imexSpec, failClosedValidation);
+    
+    const result = await salvarConfiguracao(
+      config.valveType,
+      {
+        ...config,
+        imex_code: saveData.imex_code,
+        missing_fields: saveData.missing_fields,
+        is_complete: saveData.is_complete,
+      },
+      undefined, // tagCliente
+      savedConfigId || undefined
+    );
+
+    if (result.sucesso) {
+      setSavedConfigId(result.id || null);
+      if (saveData.missing_fields.length > 0) {
+        toast.warning(`Salvo como INCOMPLETO`, {
+          description: `Faltando: ${saveData.missing_fields.join(', ')}`,
+        });
+      } else {
+        toast.success("Rascunho salvo com sucesso!", {
+          description: `Código: ${result.codigo}`,
+        });
+      }
+    }
   };
 
-  const handleSubmit = async () => {
-    // Basic validation
-    if (!canProceed()) {
-      toast.error("Configuração incompleta", {
-        description: "Preencha todos os campos obrigatórios.",
+  const handlePublish = async () => {
+    // Fail-closed: Block if not complete
+    if (!failClosedValidation.canPublish) {
+      toast.error("Publicação bloqueada", {
+        description: `Campos faltando: ${failClosedValidation.missingFields.join(', ')}`,
       });
       return;
     }
+
+    // Save first if not saved
+    if (!savedConfigId) {
+      await handleSaveDraft();
+    }
+
+    // TODO: Implement actual submission to approval workflow
     toast.success("Especificação enviada para aprovação!", {
-      description: "Você será notificado quando for revisada.",
+      description: "Status atualizado para SUBMITTED. Você será notificado quando for revisada.",
     });
   };
 
@@ -188,9 +232,9 @@ const Configurator = () => {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleSave}>
+          <Button variant="outline" size="sm" onClick={handleSaveDraft} disabled={isSaving}>
             <Save className="h-4 w-4 mr-2" />
-            Salvar Rascunho
+            {failClosedValidation.missingFields.length > 0 ? 'Salvar Incompleto' : 'Salvar Rascunho'}
           </Button>
         </div>
       </div>
@@ -221,6 +265,20 @@ const Configurator = () => {
             {/* IMEX Description Card - Above navigation/save buttons */}
             <ImexDescriptionCard spec={imexSpec} />
 
+            {/* Fail-Closed Actions - Shown on last step */}
+            {currentStep === 3 && (
+              <Card className="card-industrial">
+                <CardContent className="pt-6">
+                  <FailClosedActions
+                    validation={failClosedValidation}
+                    onSaveDraft={handleSaveDraft}
+                    onPublish={handlePublish}
+                    isLoading={isSaving || isValidating}
+                  />
+                </CardContent>
+              </Card>
+            )}
+
             {/* Navigation */}
             <div className="flex items-center justify-between pt-4">
               <Button
@@ -238,19 +296,14 @@ const Configurator = () => {
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               ) : (
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={handleSave}>
-                    <Save className="h-4 w-4 mr-2" />
-                    Salvar
-                  </Button>
-                  <Button 
-                    onClick={handleSubmit} 
-                    disabled={!canProceed() || isValidating}
-                  >
-                    <FileDown className="h-4 w-4 mr-2" />
-                    {isValidating ? "Validando..." : "Enviar para Aprovação"}
-                  </Button>
-                </div>
+                <Button 
+                  variant="ghost" 
+                  onClick={handleSaveDraft} 
+                  disabled={isSaving}
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  Salvar e Sair
+                </Button>
               )}
             </div>
           </div>
