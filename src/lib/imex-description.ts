@@ -1,28 +1,35 @@
 // IMEX Description Builder - Single Source of Truth
 // Generates standardized IMEX codes from valve specifications
+// Uses IMEX catalog for code/imex_code/label mappings
 
 import type { ValveType, PressureClass, EndType, ActuationType } from '@/types/valve';
+import { 
+  IMEX_CATALOG, 
+  getImexCode, 
+  findByCode,
+  type CatalogItem 
+} from '@/data/imex-catalog';
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
 export interface ImexSpec {
-  // Basic
-  valveType: ValveType | null;
-  diameterNPS: string | null;
-  pressureClass: PressureClass | null;
-  endType: EndType | null;
+  // Basic - now stores imex_code values
+  valveType: ValveType | string | null;
+  diameterNPS: string | null;         // Stores code (e.g., "2", "1.5")
+  pressureClass: PressureClass | string | null;
+  endType: EndType | string | null;
   flangeFace?: string | null;
   
-  // Materials
-  bodyMaterial: string | null;
-  seatMaterial: string | null;
+  // Materials - stores imex_code values
+  bodyMaterial: string | null;        // Stores code (e.g., "ASTM_A216_WCB")
+  seatMaterial: string | null;        // Stores code (e.g., "PTFE")
   obturatorMaterial?: string | null;
   stemMaterial?: string | null;
   
-  // Actuation
-  actuationType: ActuationType | null;
+  // Actuation - stores imex_code
+  actuationType: ActuationType | string | null;
   
   // Special requirements
   fireTest?: string | null;
@@ -49,73 +56,97 @@ export interface BuildResult {
 }
 
 // ============================================================================
-// MAPPINGS
+// LEGACY MAPPINGS (for backwards compatibility)
 // ============================================================================
 
 // Valve type to model code mapping
-const VALVE_MODEL_MAP: Record<ValveType, string> = {
-  'ESFERA': 'VE',
-  'GLOBO': 'VG',
-  'GAVETA': 'VGT',
-  'RETENCAO': 'VR',
-  'BORBOLETA': 'VB',
-  'CONTROLE': 'VC',
+const VALVE_MODEL_MAP: Record<string, string> = {
+  'ESFERA': 'TRUF',
+  'ESFERA_RED': 'TRUR',
+  'ESFERA_FLOAT': 'FL3F',
+  'GLOBO': 'GLBY',
+  'GLOBO_ANG': 'GLBA',
+  'GAVETA': 'GVSC',
+  'GAVETA_EXP': 'GVEX',
+  'RETENCAO': 'CHKS',
+  'RETENCAO_PIST': 'CHKP',
+  'BORBOLETA': 'BTFL',
+  'CONTROLE': 'CTRL',
 };
 
 // Pressure class to single character encoding
-const PRESSURE_CLASS_MAP: Record<PressureClass, string> = {
+const PRESSURE_CLASS_MAP: Record<string, string> = {
   '150': '1',
   '300': '3',
   '600': '6',
+  '800': '8',
   '900': 'A',
   '1500': 'B',
   '2500': 'Y',
 };
 
 // End type to connection code
-const END_TYPE_MAP: Record<EndType, string> = {
-  'FLANGEADO': 'FL',
-  'BW': 'BW',
-  'SW': 'SW',
-  'NPT': 'TH',
-  'WAFER': 'WF',
-  'LUG': 'LG',
+const END_TYPE_MAP: Record<string, string> = {
+  'FLANGEADO': 'FRE',
+  'FLANGEADO_RF': 'FRF',
+  'FLANGEADO_RTJ': 'RTJ',
+  'FLANGEADO_FF': 'FFF',
+  'BW': 'BWE',
+  'SW': 'SOW',
+  'NPT': 'NIP',
+  'WAFER': 'WAF',
+  'LUG': 'LUG',
 };
 
 // Body material code extraction
 const BODY_MATERIAL_MAP: Record<string, string> = {
+  'ASTM_A216_WCB': 'WCB',
+  'ASTM_A352_LCB': 'LCB',
+  'ASTM_A352_LCC': 'LCC',
+  'ASTM_A351_CF8M': '36L',
+  'ASTM_A351_CF3M': '36L',
+  'ASTM_A995_4A': 'F55',
+  'ASTM_A995_5A': 'F55',
+  'ASTM_A995_6A': 'F55',
+  'ASTM_A105': 'A15',
+  'ASTM_A182_F316': '36L',
+  'ASTM_A182_F304': '34L',
+  // Legacy support
   'ASTM A216 WCB': 'WCB',
   'ASTM A352 LCC': 'LCC',
-  'ASTM A351 CF8M': 'CF8M',
-  'ASTM A351 CF3M': 'CF3M',
-  'ASTM A995 4A': 'DPX',
-  'ASTM A995 5A': 'SDPX',
-  'ASTM A995 6A': 'SDPX',
-  'ASTM A105': 'A105',
-  'ASTM A182 F316': 'F316',
-  'ASTM A182 F304': 'F304',
+  'ASTM A351 CF8M': '36L',
+  'ASTM A351 CF3M': '36L',
+  'ASTM A995 4A': 'F55',
+  'ASTM A995 5A': 'F55',
+  'ASTM A995 6A': 'F55',
+  'ASTM A105': 'A15',
+  'ASTM A182 F316': '36L',
+  'ASTM A182 F304': '34L',
 };
 
 // Seat/trim material codes
 const SEAT_MATERIAL_MAP: Record<string, string> = {
   'PTFE': 'PT',
-  'RPTFE': 'RPT',
+  'RPTFE': 'RP',
   'PEEK': 'PK',
   'METAL': 'MT',
   'STELLITE': 'ST',
-  'ENP': 'ENP',
-  'INCONEL': 'INC',
+  'ENP': 'EP',
+  'INCONEL': 'IN',
   'NYLON': 'NY',
   'DEVLON': 'DV',
   'GRAFITE': 'GR',
 };
 
 // Actuation type codes
-const ACTUATION_MAP: Record<ActuationType, string> = {
-  'MANUAL': 'MN',
-  'PNEUMATICO': 'PN',
-  'ELETRICO': 'EL',
-  'HIDRAULICO': 'HY',
+const ACTUATION_MAP: Record<string, string> = {
+  'MANUAL': '0L0000',
+  'MANUAL_GEAR': '0L538M',
+  'PNEUMATICO': '1V4GB7',
+  'PNEUMATICO_SA': '1V4GB7',
+  'PNEUMATICO_DA': '1V4GBD',
+  'ELETRICO': '0L6GL7',
+  'HIDRAULICO': '0L7HY1',
 };
 
 // ============================================================================
@@ -131,7 +162,7 @@ export function parseNpsToInch(nps: string | null | undefined): number | null {
   
   const cleaned = nps.trim();
   
-  // Handle decimal format (e.g., "2.5")
+  // Handle decimal format (e.g., "2.5", "0.5")
   if (/^\d+\.?\d*$/.test(cleaned)) {
     return parseFloat(cleaned);
   }
@@ -165,16 +196,22 @@ export function parseNpsToInch(nps: string | null | undefined): number | null {
 /**
  * Encodes NPS and pressure class into NNNX format
  * NNN = 3 digits (NPS * 10, zero-padded)
- * X = pressure class character
+ * X = pressure class character (150=1, 300=3, 600=6, 800=8, 900=A, 1500=B, 2500=Y)
  */
 export function encodeSizeClass(
   nps: string | null | undefined,
-  pressureClass: PressureClass | null | undefined
+  pressureClass: string | null | undefined
 ): string | null {
   const inchValue = parseNpsToInch(nps);
   if (inchValue === null || !pressureClass) return null;
   
-  const classChar = PRESSURE_CLASS_MAP[pressureClass];
+  // Get class character from map or catalog
+  let classChar = PRESSURE_CLASS_MAP[pressureClass];
+  if (!classChar) {
+    const catalogItem = findByCode(IMEX_CATALOG.pressureClasses, pressureClass);
+    classChar = catalogItem?.imex_code || '';
+  }
+  
   if (!classChar) return null;
   
   // NPS * 10, formatted as 3 digits with leading zeros
@@ -184,13 +221,19 @@ export function encodeSizeClass(
 }
 
 /**
- * Extracts material code from full material name
+ * Extracts IMEX code from material using catalog or legacy maps
  */
 function extractMaterialCode(material: string | null | undefined, map: Record<string, string>): string | null {
   if (!material) return null;
   
-  // Direct match
+  // Direct match in legacy map
   if (map[material]) return map[material];
+  
+  // Try catalog lookup
+  const catalogItem = findByCode(IMEX_CATALOG.bodyMaterials, material) ||
+                      findByCode(IMEX_CATALOG.seatMaterials, material) ||
+                      findByCode(IMEX_CATALOG.stemMaterials, material);
+  if (catalogItem) return catalogItem.imex_code;
   
   // Partial match (material name contains key)
   for (const [key, code] of Object.entries(map)) {
@@ -200,8 +243,8 @@ function extractMaterialCode(material: string | null | undefined, map: Record<st
     }
   }
   
-  // Return first 4 characters as fallback
-  return material.substring(0, 4).toUpperCase().replace(/\s/g, '');
+  // Return first 3 characters as fallback
+  return material.substring(0, 3).toUpperCase().replace(/\s/g, '');
 }
 
 /**
@@ -252,14 +295,21 @@ export function buildDescricaoImex(spec: ImexSpec): BuildResult {
   
   // 1. MODELO (Valve Type)
   let modelo = '';
-  if (spec.valveType && VALVE_MODEL_MAP[spec.valveType]) {
-    modelo = VALVE_MODEL_MAP[spec.valveType];
-    segments.push({
-      key: 'modelo',
-      label: 'Modelo',
-      value: modelo,
-      source: spec.valveType,
-    });
+  if (spec.valveType) {
+    // Try catalog first, then legacy map
+    const catalogItem = findByCode(IMEX_CATALOG.valveModels, spec.valveType);
+    modelo = catalogItem?.imex_code || VALVE_MODEL_MAP[spec.valveType] || '';
+    
+    if (modelo) {
+      segments.push({
+        key: 'modelo',
+        label: 'Modelo',
+        value: modelo,
+        source: catalogItem?.label || spec.valveType,
+      });
+    } else {
+      missing.push('Tipo de válvula');
+    }
   } else {
     missing.push('Tipo de válvula');
   }
@@ -282,18 +332,29 @@ export function buildDescricaoImex(spec: ImexSpec): BuildResult {
   
   // 3. CONEXAO (End Type)
   let conexao = '';
-  if (spec.endType && END_TYPE_MAP[spec.endType]) {
-    conexao = END_TYPE_MAP[spec.endType];
+  if (spec.endType) {
+    // Try catalog first, then legacy map
+    const catalogItem = findByCode(IMEX_CATALOG.endConnections, spec.endType);
+    conexao = catalogItem?.imex_code || END_TYPE_MAP[spec.endType] || '';
+    
     // Add flange face if flanged
-    if (spec.endType === 'FLANGEADO' && spec.flangeFace) {
-      conexao += `-${spec.flangeFace}`;
+    if (spec.endType.includes('FLANGEADO') && spec.flangeFace) {
+      const faceItem = findByCode(IMEX_CATALOG.flangeFaces, spec.flangeFace);
+      if (faceItem) {
+        conexao = faceItem.imex_code;
+      }
     }
-    segments.push({
-      key: 'conexao',
-      label: 'Conexão',
-      value: conexao,
-      source: spec.endType,
-    });
+    
+    if (conexao) {
+      segments.push({
+        key: 'conexao',
+        label: 'Conexão',
+        value: conexao,
+        source: catalogItem?.label || spec.endType,
+      });
+    } else {
+      missing.push('Tipo de extremidade');
+    }
   } else {
     missing.push('Tipo de extremidade');
   }
@@ -303,11 +364,12 @@ export function buildDescricaoImex(spec: ImexSpec): BuildResult {
   const bodyCode = extractMaterialCode(spec.bodyMaterial, BODY_MATERIAL_MAP);
   if (bodyCode) {
     corpo = bodyCode;
+    const catalogItem = findByCode(IMEX_CATALOG.bodyMaterials, spec.bodyMaterial || '');
     segments.push({
       key: 'corpo',
       label: 'Corpo',
       value: corpo,
-      source: spec.bodyMaterial,
+      source: catalogItem?.label || spec.bodyMaterial,
     });
   } else {
     missing.push('Material do corpo');
@@ -318,11 +380,12 @@ export function buildDescricaoImex(spec: ImexSpec): BuildResult {
   const seatCode = extractMaterialCode(spec.seatMaterial, SEAT_MATERIAL_MAP);
   if (seatCode) {
     trim = seatCode;
+    const catalogItem = findByCode(IMEX_CATALOG.seatMaterials, spec.seatMaterial || '');
     segments.push({
       key: 'trim',
       label: 'Trim',
       value: trim,
-      source: spec.seatMaterial,
+      source: catalogItem?.label || spec.seatMaterial,
     });
   } else {
     missing.push('Material da sede');
@@ -330,14 +393,21 @@ export function buildDescricaoImex(spec: ImexSpec): BuildResult {
   
   // 6. ATUACAO (Actuation Type)
   let atuacao = '';
-  if (spec.actuationType && ACTUATION_MAP[spec.actuationType]) {
-    atuacao = ACTUATION_MAP[spec.actuationType];
-    segments.push({
-      key: 'atuacao',
-      label: 'Atuação',
-      value: atuacao,
-      source: spec.actuationType,
-    });
+  if (spec.actuationType) {
+    // Try catalog first, then legacy map
+    const catalogItem = findByCode(IMEX_CATALOG.actuationCodes, spec.actuationType);
+    atuacao = catalogItem?.imex_code || ACTUATION_MAP[spec.actuationType] || '';
+    
+    if (atuacao) {
+      segments.push({
+        key: 'atuacao',
+        label: 'Atuação',
+        value: atuacao,
+        source: catalogItem?.label || spec.actuationType,
+      });
+    } else {
+      missing.push('Tipo de atuação');
+    }
   } else {
     missing.push('Tipo de atuação');
   }
