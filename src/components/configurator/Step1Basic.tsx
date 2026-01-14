@@ -8,17 +8,11 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import {
-  ValveConfiguration,
-  VALVE_TYPES,
-  CONSTRUCTION_STANDARDS,
-  DIAMETER_OPTIONS,
-  PRESSURE_CLASSES,
-  END_TYPES,
-  FLANGE_FACES,
-  ValveType,
-} from "@/types/valve";
+import { ValveConfiguration } from "@/types/valve";
+import { 
+  IMEX_CATALOG,
+  type CatalogItem 
+} from "@/data/imex-catalog";
 
 interface Step1BasicProps {
   config: ValveConfiguration;
@@ -48,8 +42,8 @@ const Step1Basic = ({ config, onChange }: Step1BasicProps) => {
                 <SelectValue placeholder="Selecione a norma" />
               </SelectTrigger>
               <SelectContent>
-                {CONSTRUCTION_STANDARDS.map((std) => (
-                  <SelectItem key={std.value} value={std.value}>
+                {IMEX_CATALOG.constructionStandards.map((std) => (
+                  <SelectItem key={std.code} value={std.code}>
                     {std.label}
                   </SelectItem>
                 ))}
@@ -68,9 +62,9 @@ const Step1Basic = ({ config, onChange }: Step1BasicProps) => {
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
-                  {DIAMETER_OPTIONS.map((d) => (
-                    <SelectItem key={d} value={d}>
-                      {d}"
+                  {IMEX_CATALOG.diameterOptions.map((d) => (
+                    <SelectItem key={d.code} value={d.code}>
+                      {d.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -87,9 +81,9 @@ const Step1Basic = ({ config, onChange }: Step1BasicProps) => {
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
-                  {PRESSURE_CLASSES.map((p) => (
-                    <SelectItem key={p} value={p}>
-                      Class {p}
+                  {IMEX_CATALOG.pressureClasses.map((p) => (
+                    <SelectItem key={p.code} value={p.code}>
+                      {p.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -119,8 +113,8 @@ const Step1Basic = ({ config, onChange }: Step1BasicProps) => {
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
-                  {END_TYPES.map((e) => (
-                    <SelectItem key={e.value} value={e.value}>
+                  {IMEX_CATALOG.endConnections.map((e) => (
+                    <SelectItem key={e.code} value={e.code}>
                       {e.label}
                     </SelectItem>
                   ))}
@@ -131,7 +125,7 @@ const Step1Basic = ({ config, onChange }: Step1BasicProps) => {
             <div className="space-y-2">
               <Label htmlFor="flangeFace">
                 Face do Flange
-                {config.endType === "FLANGEADO" && (
+                {config.endType?.includes("FLANGEADO") && (
                   <Badge variant="secondary" className="ml-2 text-xs">
                     Obrigatório
                   </Badge>
@@ -140,14 +134,14 @@ const Step1Basic = ({ config, onChange }: Step1BasicProps) => {
               <Select
                 value={config.flangeFace || ""}
                 onValueChange={(value) => onChange({ flangeFace: value as any })}
-                disabled={config.endType !== "FLANGEADO"}
+                disabled={!config.endType?.includes("FLANGEADO")}
               >
                 <SelectTrigger id="flangeFace">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
-                  {FLANGE_FACES.map((f) => (
-                    <SelectItem key={f.value} value={f.value}>
+                  {IMEX_CATALOG.flangeFaces.map((f) => (
+                    <SelectItem key={f.code} value={f.code}>
                       {f.label}
                     </SelectItem>
                   ))}

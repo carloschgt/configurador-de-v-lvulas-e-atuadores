@@ -8,13 +8,9 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Shield, Flame, Wind } from "lucide-react";
-import {
-  ValveConfiguration,
-  BODY_MATERIALS,
-  SIL_OPTIONS,
-} from "@/types/valve";
+import { ValveConfiguration } from "@/types/valve";
+import { IMEX_CATALOG } from "@/data/imex-catalog";
 
 interface Step3MaterialsProps {
   config: ValveConfiguration;
@@ -44,8 +40,8 @@ const Step3Materials = ({ config, onChange }: Step3MaterialsProps) => {
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
-                  {BODY_MATERIALS.map((m) => (
-                    <SelectItem key={m.value} value={m.value}>
+                  {IMEX_CATALOG.bodyMaterials.map((m) => (
+                    <SelectItem key={m.code} value={m.code}>
                       {m.label}
                     </SelectItem>
                   ))}
@@ -63,8 +59,8 @@ const Step3Materials = ({ config, onChange }: Step3MaterialsProps) => {
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
-                  {BODY_MATERIALS.map((m) => (
-                    <SelectItem key={m.value} value={m.value}>
+                  {IMEX_CATALOG.bodyMaterials.map((m) => (
+                    <SelectItem key={m.code} value={m.code}>
                       {m.label}
                     </SelectItem>
                   ))}
@@ -82,12 +78,11 @@ const Step3Materials = ({ config, onChange }: Step3MaterialsProps) => {
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="PTFE">PTFE</SelectItem>
-                  <SelectItem value="RPTFE">RPTFE (Reforçado)</SelectItem>
-                  <SelectItem value="PEEK">PEEK</SelectItem>
-                  <SelectItem value="METAL">Metal-Metal</SelectItem>
-                  <SelectItem value="INCONEL">Inconel</SelectItem>
-                  <SelectItem value="STELLITE">Stellite</SelectItem>
+                  {IMEX_CATALOG.seatMaterials.map((m) => (
+                    <SelectItem key={m.code} value={m.code}>
+                      {m.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -102,11 +97,11 @@ const Step3Materials = ({ config, onChange }: Step3MaterialsProps) => {
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ASTM A182 F6a">ASTM A182 F6a - Inox 410</SelectItem>
-                  <SelectItem value="ASTM A182 F316">ASTM A182 F316 - Inox 316</SelectItem>
-                  <SelectItem value="ASTM A182 F51">ASTM A182 F51 - Duplex</SelectItem>
-                  <SelectItem value="ASTM A182 F53">ASTM A182 F53 - Super Duplex</SelectItem>
-                  <SelectItem value="INCONEL 625">Inconel 625</SelectItem>
+                  {IMEX_CATALOG.stemMaterials.map((m) => (
+                    <SelectItem key={m.code} value={m.code}>
+                      {m.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -185,11 +180,10 @@ const Step3Materials = ({ config, onChange }: Step3MaterialsProps) => {
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>
               <SelectContent>
-                {SIL_OPTIONS.map((s) => (
-                  <SelectItem key={s.value} value={s.value}>
-                    {s.label}
-                  </SelectItem>
-                ))}
+                <SelectItem value="NA">N/A - Não aplicável</SelectItem>
+                <SelectItem value="SIL1">SIL 1</SelectItem>
+                <SelectItem value="SIL2">SIL 2</SelectItem>
+                <SelectItem value="SIL3">SIL 3</SelectItem>
               </SelectContent>
             </Select>
           </div>
